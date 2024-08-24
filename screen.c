@@ -20,8 +20,15 @@ Screen* createScreen() {
 }
 
 
-void updateDisplay(Screen *screen, char *c) {
-    strncat(screen->display, c, 256 - strlen(screen->display) - 1);
+void updateDisplay(Screen *screen, char c) {
+    if (c == 'a') {
+        screen->display[0] = '\0';
+        return;
+    } else if (c != 'n') {
+        size_t len = strlen(screen->display);
+        screen->display[len] = c;
+        screen->display[len + 1] = '\0';
+    }
 }
 
 

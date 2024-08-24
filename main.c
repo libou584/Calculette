@@ -26,7 +26,7 @@ int main() {
     }
 
     TTF_Init();
-	TTF_Font *font = TTF_OpenFont("asset/fonts/futura.ttf", 150);
+	TTF_Font *font = TTF_OpenFont("asset/fonts/futura.ttf", 500);
 
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 8, 2048) < 0) {
     	printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
@@ -72,8 +72,6 @@ int main() {
     Button *buttons[NBUTTONS];
     loadButtons(buttons, textures);
     Screen* screen = createScreen();
-    // updateDisplay(screen, "0");
-    // printf("screen->display: %s\n", screen->display);
 
     int running = 1;
     while (running) {
@@ -86,6 +84,7 @@ int main() {
                 running = 0;
             } else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 res = buttonClicked(buttons, event.button.x, event.button.y, sounds);
+                updateDisplay(screen, res);
             }
         }
 

@@ -10,7 +10,7 @@ typedef struct _Screen {
 } Screen;
 
 Screen *createScreen();
-void updateDisplay(Screen *screen, char *c);
+void updateDisplay(Screen *screen, char c);
 void renderScreen(SDL_Renderer *renderer, SDL_Texture *whiteTexture, Screen *screen, TTF_Font *font);
 void destroyScreen(Screen *screen);
 
