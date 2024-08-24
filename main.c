@@ -15,7 +15,6 @@ int SCREEN_HEIGHT = 1080;
 
 
 int main() {
-    // printf("Initializing SDL...\n");
     SDL_Window* window = SDL_CreateWindow("Calculette", SCREEN_WIDTH - WINDOW_WIDTH, SCREEN_HEIGHT - WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!window || !renderer) {
@@ -23,7 +22,6 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    // printf("Initializing OpenCL...\n");
     cl_context context;
     cl_command_queue queue;
     cl_program program;
@@ -66,7 +64,6 @@ int main() {
     Mix_Chunk *sounds[NSOUNDS];
 	loadSounds(sounds);
 
-    // printf("Entering main loop...\n");
     int running = 1;
     while (running) {
         Uint32 startTime = SDL_GetTicks();
@@ -82,7 +79,6 @@ int main() {
         }
 
         renderFrame(renderer, bgTexture, queue, kernel, bufPixels, bufferSize, pixels, whiteTexture);
-        // displayPad(renderer, whiteTexture, buttons);
         displayPad(renderer, whiteTexture, buttons, sounds);
         SDL_RenderPresent(renderer);
 
