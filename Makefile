@@ -1,6 +1,6 @@
 # Fichiers
 TARGET = main
-SRCS = main.c background.c
+SRCS = main.c background.c pad.c button.c sound.c
 OBJS = $(SRCS:.c=.o)
 
 # Compilation
@@ -17,10 +17,10 @@ CFLAGS += -g -Wall -Wextra -pedantic
 #Libs
 CFLAGS += $(shell pkg-config --cflags sdl2)
 LDFLAGS += $(shell pkg-config --libs sdl2)
-# CFLAGS += $(shell pkg-config --cflags SDL2_image)
-# LDFLAGS += $(shell pkg-config --libs SDL2_image)
-# CLAGS += $(shell pkg-config --cflags SDL2_mixer)
-# LDFLAGS += $(shell pkg-config --libs SDL2_mixer)
+CFLAGS += $(shell pkg-config --cflags SDL2_image)
+LDFLAGS += $(shell pkg-config --libs SDL2_image)
+CLAGS += $(shell pkg-config --cflags SDL2_mixer)
+LDFLAGS += $(shell pkg-config --libs SDL2_mixer)
 # CFLAGS += $(shell pkg-config --cflags SDL2_ttf)
 # LDFLAGS += $(shell pkg-config --libs SDL2_tff)
 

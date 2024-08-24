@@ -3,6 +3,8 @@
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "background.h"
+#include "const.h"
 
 
 
@@ -33,78 +35,86 @@ float max(float a, float b) {
 }
 
 
-// void checkError(cl_int err, const char* operation) {
-//     if (err != CL_SUCCESS) {
-//         fprintf(stderr, "Error during operation '%s': %d\n", operation, err);
-//         exit(1);
-//     }
-// }
+void checkError(cl_int err, const char* operation) {
+    if (err != CL_SUCCESS) {
+        fprintf(stderr, "Error during operation '%s': %d\n", operation, err);
+        exit(1);
+    }
+}
 
 
-int initializeOpenCL(cl_context* context, cl_command_queue* queue, cl_program* program, cl_kernel* kernel, cl_mem* bufPixels, size_t bufferSize, int WINDOW_WIDTH, int WINDOW_HEIGHT) {
+int initializeOpenCL(cl_context* context, cl_command_queue* queue, cl_program* program, cl_kernel* kernel, cl_mem* bufPixels, size_t bufferSize) {
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
+    int width = WINDOW_WIDTH;
+    int height = WINDOW_HEIGHT;
 
     // Get platform and device information
     err = clGetPlatformIDs(1, &platform, NULL);
-    // checkError(err, "clGetPlatformIDs");
+    checkError(err, "clGetPlatformIDs");
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    // checkError(err, "clGetDeviceIDs");
+    checkError(err, "clGetDeviceIDs");
 
     // Create OpenCL context
     *context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
-    // checkError(err, "clCreateContext");
+    checkError(err, "clCreateContext");
 
     // Create command queue
     *queue = clCreateCommandQueueWithProperties(*context, device, 0, &err);
-    // checkError(err, "clCreateCommandQueueWithProperties");
+    checkError(err, "clCreateCommandQueueWithProperties");
 
     // Create program from source
     *program = clCreateProgramWithSource(*context, 1, &kernelSource, NULL, &err);
-    // checkError(err, "clCreateProgramWithSource");
+    checkError(err, "clCreateProgramWithSource");
 
     // Build program
     err = clBuildProgram(*program, 1, &device, NULL, NULL, NULL);
-    // checkError(err, "clBuildProgram");
+    checkError(err, "clBuildProgram");
 
     // Create kernel
     *kernel = clCreateKernel(*program, "setPixels", &err);
-    // checkError(err, "clCreateKernel");
+    checkError(err, "clCreateKernel");
 
     // Allocate memory for pixel buffer
     *bufPixels = clCreateBuffer(*context, CL_MEM_WRITE_ONLY, bufferSize, NULL, &err);
-    // checkError(err, "clCreateBuffer");
+    checkError(err, "clCreateBuffer");
 
     // Set kernel arguments
     err = clSetKernelArg(*kernel, 0, sizeof(cl_mem), bufPixels);
     // checkError(err, "clSetKernelArg");
-    err = clSetKernelArg(*kernel, 1, sizeof(int), &WINDOW_WIDTH);
-    // checkError(err, "clSetKernelArg");
-    err = clSetKernelArg(*kernel, 2, sizeof(int), &WINDOW_HEIGHT);
-    // checkError(err, "clSetKernelArg");
+    err = clSetKernelArg(*kernel, 1, sizeof(int), &width);
+    checkError(err, "clSetKernelArg");
+    err = clSetKernelArg(*kernel, 2, sizeof(int), &height);
+    checkError(err, "clSetKernelArg");
 
     return 0;
 }
 
 
-void renderFrame(SDL_Renderer* renderer, SDL_Texture* texture, cl_command_queue queue, cl_kernel kernel, cl_mem bufPixels, size_t bufferSize, cl_uchar4* pixels, int WINDOW_WIDTH, int WINDOW_HEIGHT, float DT) {
-    static Uint32 startTime = 0;
-    Uint32 endTime, elapsedMS;
+SDL_Texture* loadWhiteTexture(SDL_Renderer* renderer) {
+    SDL_Surface* surface = SDL_CreateRGBSurface(0, 16, 16, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 200, 200, 200, 100));
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return texture;
+}
 
+
+void renderFrame(SDL_Renderer* renderer, SDL_Texture* texture, cl_command_queue queue, cl_kernel kernel, cl_mem bufPixels, size_t bufferSize, cl_uchar4* pixels, SDL_Texture* whiteTexture) {
     // Set dynamic kernel argument
     float time = SDL_GetTicks() / 1000.0f;
     cl_int err = clSetKernelArg(kernel, 3, sizeof(float), &time);
-    // checkError(err, "clSetKernelArg (time)");
+    checkError(err, "clSetKernelArg (time)");
 
     // Execute the kernel
     size_t globalSize[2] = { WINDOW_WIDTH, WINDOW_HEIGHT };
     err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, NULL, 0, NULL, NULL);
-    // checkError(err, "clEnqueueNDRangeKernel");
+    checkError(err, "clEnqueueNDRangeKernel");
 
     // Read pixel data from GPU
     err = clEnqueueReadBuffer(queue, bufPixels, CL_TRUE, 0, bufferSize, pixels, 0, NULL, NULL);
-    // checkError(err, "clEnqueueReadBuffer");
+    checkError(err, "clEnqueueReadBuffer");
 
     // Update texture with pixel data
     SDL_UpdateTexture(texture, NULL, pixels, WINDOW_WIDTH * sizeof(cl_uchar4));
@@ -113,11 +123,6 @@ void renderFrame(SDL_Renderer* renderer, SDL_Texture* texture, cl_command_queue 
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
 
-    // Calculate FPS
-    endTime = SDL_GetTicks();
-    elapsedMS = endTime - startTime;
-    SDL_Delay(max((1000*DT - elapsedMS)/1.0f, 0));
-
-    SDL_RenderPresent(renderer);
-    startTime = endTime;
+    SDL_Rect rect = { .x = 16, .y = 16, .w = 336, .h = 496 };
+    SDL_RenderCopy(renderer, whiteTexture, NULL, &rect);
 }
