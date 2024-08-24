@@ -1,6 +1,6 @@
 # Fichiers
 TARGET = main
-SRCS = main.c background.c pad.c button.c sound.c
+SRCS = main.c background.c pad.c button.c sound.c screen.c texture.c
 OBJS = $(SRCS:.c=.o)
 
 # Compilation
@@ -39,3 +39,7 @@ clean:
 run: 
 	make
 	./main
+
+ready:
+	make
+	rm -f $(OBJS)

@@ -8,19 +8,32 @@
 #include "button.h"
 #include "pad.h"
 #include "sound.h"
+#include "screen.h"
+#include "texture.h"
 
 
-int SCREEN_WIDTH = 1920;
-int SCREEN_HEIGHT = 1080;
+
 
 
 int main() {
+    int SCREEN_WIDTH = 1920;
+    int SCREEN_HEIGHT = 1080;
     SDL_Window* window = SDL_CreateWindow("Calculette", SCREEN_WIDTH - WINDOW_WIDTH, SCREEN_HEIGHT - WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!window || !renderer) {
         fprintf(stderr, "Could not create SDL2 window or renderer: %s\n", SDL_GetError());
         return EXIT_FAILURE;
     }
+
+    TTF_Init();
+	TTF_Font *font = TTF_OpenFont("asset/fonts/futura.ttf", 150);
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 8, 2048) < 0) {
+    	printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+        exit(-1);
+    }
+    Mix_Chunk *sounds[NSOUNDS];
+	loadSounds(sounds);
 
     cl_context context;
     cl_command_queue queue;
@@ -53,16 +66,14 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    SDL_Texture* whiteTexture = loadWhiteTexture(renderer);
-    Button *buttons[NBUTTONS];
-    loadButtons(buttons);
+    SDL_Texture *textures[NTEXTURES];
+	loadTextures(renderer, textures, font);
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 8, 2048) < 0) {
-    	printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-        exit(-1);
-    }
-    Mix_Chunk *sounds[NSOUNDS];
-	loadSounds(sounds);
+    Button *buttons[NBUTTONS];
+    loadButtons(buttons, textures);
+    Screen* screen = createScreen();
+    // updateDisplay(screen, "0");
+    // printf("screen->display: %s\n", screen->display);
 
     int running = 1;
     while (running) {
@@ -78,8 +89,8 @@ int main() {
             }
         }
 
-        renderFrame(renderer, bgTexture, queue, kernel, bufPixels, bufferSize, pixels, whiteTexture);
-        displayPad(renderer, whiteTexture, buttons, sounds);
+        renderFrame(renderer, bgTexture, queue, kernel, bufPixels, bufferSize, pixels, textures[18]);
+        displayPad(renderer, textures[18], screen, buttons, sounds, font);
         SDL_RenderPresent(renderer);
 
         Uint32 endTime = SDL_GetTicks();
@@ -93,10 +104,11 @@ int main() {
     clReleaseProgram(program);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
+    destroyScreen(screen);
     destroyButtons(buttons);
+    destroyTextures(textures);
     destroySounds(sounds);
     SDL_DestroyTexture(bgTexture);
-    SDL_DestroyTexture(whiteTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

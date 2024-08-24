@@ -92,15 +92,6 @@ int initializeOpenCL(cl_context* context, cl_command_queue* queue, cl_program* p
 }
 
 
-SDL_Texture* loadWhiteTexture(SDL_Renderer* renderer) {
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, 16, 16, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 200, 200, 200, 100));
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    return texture;
-}
-
-
 void renderFrame(SDL_Renderer* renderer, SDL_Texture* texture, cl_command_queue queue, cl_kernel kernel, cl_mem bufPixels, size_t bufferSize, cl_uchar4* pixels, SDL_Texture* whiteTexture) {
     // Set dynamic kernel argument
     float time = SDL_GetTicks() / 1000.0f;
